@@ -15,6 +15,10 @@ shinyServer(function(input, output,session) {
                                            contentType="image/jpeg",
                                            alt="I2MC logo"))},deleteFile = F)
   
+  output$predictionfile<-renderText({
+    namelearn<-input$predictionfile$name
+  })
+  
 MODEL<-reactive({
   if(is.null(input$modelfile)){return(NULL)}
   else{
@@ -25,38 +29,30 @@ MODEL<-reactive({
 })
 
   PREDICT<-reactive({
-    print(is.null(input$predictionfile))
     if(is.null(input$predictionfile)){return(data.frame())}#Pas de fichier
-    print(2) 
     if(!is.null(input$predictionfile)  ){
       res<-MODEL()
       print(class(res))
       
       if(input$confirmdatabuttonpred==0){
-        print(3)
         datapath<- input$predictionfile$datapath
         tabprediction<<-importfile(datapath = datapath,extension = input$filetypepred,
                               NAstring=input$NAstringpred,sheet=input$sheetnpred,skiplines=input$skipnpred,dec=input$decpred,sep=input$seppred)
-        print(4)
         if(input$changedata){
           tabprediction<<-transformdata(toto = tabprediction,nrownames=input$nrownamespred,ncolnames=input$ncolnamespred,
                                    transpose=input$transposepred,zeroegalNA=input$zeroegalNApred)
         }
-        print(5)
         resprediction<-data.frame()
         print(dim(tabprediction))
       }
-      print(6)
       if(input$confirmdatabuttonpred!=0){
         for (i in 1:ncol(tabprediction)){
          tabprediction[,i]<-as.numeric(as.character(tabprediction[,i]))
         }
-      print(7)
          learning<-res$model$decouverte$decouvdiff
          select<-which(colnames(tabprediction)%in%colnames(learning))
          tabprediction<-tabprediction[,select]
   
-      print(8)
          if(res$parameters$NAstructure){
            varstructure<-res$varstructure
            for (i in 1:length(varstructure)){
@@ -68,7 +64,6 @@ MODEL<-reactive({
          if(res$parameters$scaled){
            tabprediction<-scale(tabprediction, center = F, scale = TRUE)
          }
-      print(9)
          #if ( !"class"%in%colnames(tabprediction)){
            class<-rep(NA,times=nrow(tabprediction))
          tabprediction<-cbind(class,tabprediction)
@@ -79,7 +74,6 @@ MODEL<-reactive({
            tabpredictionssNA<-replaceNA(toto = tabprediction,rempNA ="moy")        }
          else{tabpredictionssNA<-replaceNA(toto = tabprediction,rempNA =res$parameters$rempNA)}
       tabprediction<-tabpredictionssNA[,-1]
-      print(10)
       ######prediction
       lev<-res$model$groups
       model<-res$model$model
@@ -103,7 +97,6 @@ MODEL<-reactive({
         predictclass<-as.factor(predictclass)
   
       }
-      print(11)
       if(sum(lev==(levels(predictclass)))==0){
         predictclass<-factor(predictclass,levels = rev(levels(predictclass)),ordered = TRUE)
       }
@@ -113,7 +106,6 @@ MODEL<-reactive({
       colnames(resprediction)<-c("score","predictclass")
       }
     }
-    print(12)
     parameters<<-res$parameters
     list("tab"=tabprediction,"parameters"=parameters,"resprediction"=resprediction)
     
@@ -121,7 +113,6 @@ MODEL<-reactive({
    
   #####
   output$JDDpredict=renderDataTable({
-    respredict<-PREDICT()
     predict<-PREDICT()$tab
     colmin<-min(ncol(predict),100)
     rowmin<-min(nrow(predict),100)
@@ -130,6 +121,10 @@ MODEL<-reactive({
                        "responsive" = F,
                        "pageLength" = 10))
   
+  output$downloaddataJDDpredict <- downloadHandler(
+    filename = function() { paste('dataset', '.','csv', sep='') },
+    content = function(file) {
+      downloaddataset(   PREDICT()$tab, file) })
   
   output$parameters=renderTable({
     parameters<-PREDICT()$parameters
@@ -139,6 +134,10 @@ MODEL<-reactive({
     resprediction<-PREDICT()$resprediction
     resprediction}) 
   
+  output$downloaddataresprediction <- downloadHandler(
+    filename = function() { paste('dataset', '.','csv', sep='') },
+    content = function(file) {
+      downloaddataset(   PREDICT()$resprediction, file) })
   
   
   output$plotscorepred <- renderPlot({
@@ -147,5 +146,17 @@ MODEL<-reactive({
     thresholdmodel<-res$parameters$thresholdmodel
     densityscore(score,scorepredict,maintitle="Density learning's score and prediction score",threshold=thresholdmodel)
     })
+  
+  output$downloadplotscorepred = downloadHandler(
+    filename = function() { 
+      paste('graph','.',input$paramdownplot, sep='') 
+    },
+    content = function(file) {
+      ggsave(file, plot =        densityscore(res$model$decouverte$resmodeldecouv$scoredecouv,PREDICT()$resprediction$score,
+                                              maintitle="Density learning's score and prediction score",threshold=res$parameters$thresholdmodel), 
+             device = 'jpg')
+      
+    },
+    contentType=NA)
 
 }) 

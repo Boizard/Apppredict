@@ -16,11 +16,13 @@ shinyUI(fluidPage(
  
       )),
       mainPanel(
+        
         conditionalPanel(condition =" !output.modelUploaded",
                          imageOutput("image1", height = 300)),           
         
         conditionalPanel(condition ="output.modelUploaded",
-                         
+                         conditionalPanel(condition="input.confirmdatabuttonpred==0",
+                                          
                                         wellPanel(
                                            fluidRow(
                                              column(4,h3("Download new data"),
@@ -48,11 +50,14 @@ shinyUI(fluidPage(
                                                         numericInput("nrownamespred",label = "rownames",value = 1))),
                                         hr(),
                                         actionButton("confirmdatabuttonpred","Confirm data")),
-                         conditionalPanel(condition="output.filepredUploaded & input.confirmdatabuttonpred==0",      
+                                        conditionalPanel(condition="input.confirmdatabuttonpred!=0",
+                                                  textOutput("predictionfile",inline=T), tags$head(tags$style("#predictionfile{color: grey;font-size: 15px;font-style: italic;}")))),
+                         conditionalPanel(condition="output.filepredUploaded ",      
                                           
                                        hr(),
                                        h3("predict Data"),
-                                       dataTableOutput("JDDpredict")),
+                                       dataTableOutput("JDDpredict"),
+                                       p(downloadButton("downloaddataJDDpredict","Download dataset"),align="center")),
                          conditionalPanel(condition="input.confirmdatabuttonpred",
                                        hr(),
                                        h3("Model parameters"),
@@ -61,9 +66,10 @@ shinyUI(fluidPage(
                                        fluidRow(
                                        column(5,
                                        h3("Prediction, score"),
-                                       tableOutput("resprediction")
+                                       tableOutput("resprediction"),p(downloadButton("downloadrespredition","Download dataset"),align="center")
                                        ),
-                                       column(7,br(), plotOutput("plotscorepred",width = "100%",height = 500))
+                                       column(7,br(),br(),br(), plotOutput("plotscorepred",width = "100%",height = 500),
+                                              p(downloadButton("downloadplotscorepred","Download plot")),align="center")
                                         ))
                                         ))
     )

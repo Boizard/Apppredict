@@ -5,6 +5,8 @@ usePackage <- function(p)
   require(p, character.only = TRUE)
 }
 usePackage("zoo")
+usePackage("e1071")#svm
+usePackage("ggplot2")#Graphs
 
 importfile<-function (datapath,extension,NAstring="NA",sheet=1,skiplines=0,dec=".",sep=","){
   # datapath: path of the file
