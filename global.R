@@ -12,50 +12,64 @@ importfile<-function (datapath,extension,NAstring="NA",sheet=1,skiplines=0,dec="
   # datapath: path of the file
   #extention: extention of the file : csv, xls, ou xlsx
   if(extension=="csv"){
-    toto <- read.csv2(datapath,header = F,sep =sep,dec=dec,na.strings = NAstring,stringsAsFactors = F)
+    toto <- read.csv2(datapath,header = T,sep =sep,dec=dec,na.strings = NAstring,stringsAsFactors = F,row.names=1,check.names = F )
   }
   if(extension=="xlsx"){
     options(warn=-1)
-    file.rename(datapath,paste(datapath, ".xlsx", sep=""))
+    filerm<<-file.rename(datapath,paste(datapath, ".xlsx", sep=""))
     options(warn=0)
-    toto <-read_excel(paste(datapath, ".xlsx", sep=""),na=NAstring,col_names = F,skip = skiplines,sheet = 1)
+    toto <-read_excel(paste(datapath, ".xlsx", sep=""),na=NAstring,col_names = T,skip = skiplines,sheet = sheet)
+    # toto <-read.xlsx2(file = datapath,sheetIndex = sheet)
+    #toto <-read_excel(datapath,na=NAstring,col_names = F,skip = skiplines,sheet = sheet)
+    rnames<-as.character(as.matrix(toto[,1]))
+    toto<-toto[,-1]
+    row.names(toto)<-rnames
     
   }
   toto<-as.data.frame(toto)
   return(toto)
 }
-downloaddataset<-function(x,file){
+downloaddataset<-function(x,file,cnames=T,rnames=T){
   ext<-strsplit(x = file,split = "[.]")[[1]][2]
+  print(ext)
   if(ext=="csv"){
-    write.csv2(x,file)
+    write.table(x,file,sep = ",",dec=".",col.names = cnames,row.names = rnames)
   }
   if(ext=="xlsx"){
-    write.xlsx(x,file)
+    write.xlsx(x,file,col.names = cnames,row.names =rnames )
   }
   
 }
-transformdata<-function(toto,nrownames=1,ncolnames=1,transpose,zeroegalNA,log){
-  if(length(which(apply(X = toto,MARGIN=1,function(x){sum(is.na(x))})==ncol(toto)))!=0){
-    toto<-toto[-which(apply(X = toto,MARGIN=1,function(x){sum(is.na(x))})==ncol(toto)),]}
-  #remove empty rows
-  if(length(which(apply(X = toto,MARGIN=2,function(x){sum(is.na(x))})==nrow(toto)))!=0){
-    toto<-toto[,-which(apply(X = toto,MARGIN=2,function(x){sum(is.na(x))})==nrow(toto))]}
-  #remove empty columns
+
+downloadplot<-function(file){
+  ext<-strsplit(x = file,split = "[.]")[[1]][2]
   
-  if(ncolnames!=0){
-    colnames(toto)<-renamvar(toto[ncolnames,])
-    toto<-toto[-ncolnames,]
+  if(ext=="png"){
+    png(file)
   }
-  if(nrownames!=0){
-    rownames(toto)<-renamvar(toto[,nrownames])
-    toto<-toto[,-nrownames]
-  }
+  if(ext=="jpg"){
+    jpeg(file)
+  }  
+  if(ext=="pdf"){
+    pdf(file) 
+  }     
+}
+transformdata<-function(toto,transpose,zeroegalNA){
+  #   if(length(which(apply(X = toto,MARGIN=1,function(x){sum(is.na(x))})==ncol(toto)))!=0){
+  #     toto<-toto[-which(apply(X = toto,MARGIN=1,function(x){sum(is.na(x))})==ncol(toto)),]}
+  #   #remove empty rows
+  #   if(length(which(apply(X = toto,MARGIN=2,function(x){sum(is.na(x))})==nrow(toto)))!=0){
+  #     toto<-toto[,-which(apply(X = toto,MARGIN=2,function(x){sum(is.na(x))})==nrow(toto))]}
+  #   #remove empty columns
+  
+  
   if(transpose){toto<-t(toto)}
   
   if(zeroegalNA){toto[which(toto==0,arr.ind = T)]<-NA}
   
   toto<-as.data.frame(toto)
 }
+
 renamvar<-function(names){
   #rename the duplicate name by adding ".1, .2 ....
   #toto is a vector of the col names of the tab
@@ -71,19 +85,7 @@ renamvar<-function(names){
   }
   return(names)
 }
-downloadplot<-function(file){
-  ext<-strsplit(x = file,split = "[.]")[[1]][2]
-  
-  if(ext=="png"){
-    png(file)
-  }
-  if(ext=="jpg"){
-    jpeg(file)
-  }  
-  if(ext=="pdf"){
-    pdf(file) 
-  }     
-}
+
 
 replaceNA<-function(toto,rempNA="z",pos=F,NAstructure=F,thresholdstruct=0.05,maxvaluesgroupmin=100,minvaluesgroupmax=0){ 
   #rempNA: remplace Non ATtributes values by zero("z"), the mean of the colum (moy), 
@@ -170,22 +172,50 @@ selectprctNA<-function(toto,prctNA=100,group=F,restrictif=F){
   toto<-toto[,as.logical(vec)]
 }
 
-densityscore<-function(score,scorepredict,maintitle="Density learning's score and prediction score",threshold,graph=T){
+densityscore<-function(score,scorepredict,maintitle="Density learning's score and prediction score",threshold,groups,graph=T){
   x<-density(score)$x
   y<-density(score)$y
   xddf <- data.frame(x=x,y=y)
   x<-scorepredict
   y<-rep(x = 0.1,length=length(scorepredict) )
   coordpredict<- data.frame(x=x,y=y)
-  if(!graph){rawdata<-data.frame(xcurve=xddf$x,ycurve=xdff$y,xpoints=coordpredict$x,ypoints=coordpredict$y)}
+  if(!graph){
+    rawdata<-data.frame(xcurve=xddf$x,ycurve=xddf$y,xpoints=coordpredict$x,ypoints=coordpredict$y)}
   qplot(x,y,data=xddf,geom="line",xlab = "score",ylab="density of learning's score")+
     geom_ribbon(data=subset(xddf ,x>min(density(score)$x) & x<threshold),aes(x=x,ymin=0,ymax=y,fill="blue"),
                 colour=NA,alpha=0.5)+
     geom_ribbon(data=subset(xddf ,x>threshold & x<max(density(score)$x)),aes(x=x,ymin=0,ymax=y,fill="red"),
                 colour=NA,alpha=0.5)+
     geom_point(data = coordpredict, colour = "black",size=rep(4,length(x)))+
-    ggtitle(maintitle)+theme(plot.title=element_text( size=15))+theme(legend.position = "bottom") +
-    scale_fill_manual(name='density',
+    ggtitle(maintitle)+theme(plot.title=element_text( size=20))+theme(legend.position = "bottom")+
+    theme(legend.text=element_text(size=20))+theme(legend.title=element_text(20))+ 
+    scale_fill_manual(name="Groups",
                       values=c(alpha("blue",alpha = 0.1),alpha("red",alpha = 0.5)),
-                      labels=c("negativ","positiv"))+guides(colour = guide_legend(override.aes = list(alpha = 0.5)))
+                      labels=c(as.character(groups[2]),as.character(groups[1])))+guides(colour = guide_legend(override.aes = list(alpha = 0.5)))
+}
+
+confirmdata<-function(toto){
+  for (i in 1:ncol(toto)){
+    toto[,i]<-as.numeric(as.character(toto[,i]))
+  }
+  return(toto)
+}
+
+replaceNAvalidation<-function(validationdiff,toto,rempNA){
+  validationdiffssNA<-validationdiff
+  for(i in 1:nrow(validationdiff)){
+    validationdiffssNA[i,]<-replaceNAoneline(lineNA = validationdiff[i,],toto = toto,rempNA =rempNA)
+  }
+  return(validationdiffssNA)
+}
+
+replaceNAoneline<-function(lineNA,toto,rempNA){
+  alldata<-rbind(lineNA,toto)
+  if(rempNA=="moygr"){ 
+    #print("impossible de remplacer les NA par la moyenne par group pour la validation")
+    linessNA<-replaceNA(toto = cbind(rep(0,nrow(alldata)),alldata),rempNA ="moy")[1,-1]        }
+  
+  else{linessNA<-replaceNA(toto = cbind(rep(0,nrow(alldata)),alldata),rempNA =rempNA)[1,-1]}
+  
+  return(linessNA)
 }
