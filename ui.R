@@ -80,8 +80,7 @@ shinyUI(fluidPage(
           fluidRow(
             column(4,p(h3("Prediction, score"),
               tableOutput("resprediction"),
-              downloadButton("downloaddataresprediction","Download dataset"),align="center")
-            ,offset=1),
+              downloadButton("downloaddataresprediction","Download dataset"),align="center"),offset=1),
             column(6,br(),br(),br(),
               plotOutput("plotscorepred",width = "100%",height = 500),
               p(downloadButton("downloadplotscorepred","Download plot"),downloadButton('downloaddatascorepred', 'Download raw data')),align="center"

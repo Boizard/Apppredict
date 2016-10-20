@@ -1,9 +1,9 @@
 options(shiny.maxRequestSize=30*1024^2) 
 options(xtable.include.colnames=F)
-options(xtable.include.rownames=F)
+options(xtable.include.rownames=T)
 
 source("global.R")
-shinyServer(function(input, output,session) {    
+shinyServer(function(input, output,session){    
   output$modelUploaded <- reactive({
     return(!is.null(input$modelfile))
   })
@@ -41,12 +41,13 @@ MODEL<-reactive({
 })
 
   PREDICT<-reactive({
-    resultsmodel<-MODEL()
+    resultsmodel<<-MODEL()
     # modelparameters<<-resultsmodel$parameters$modelparameters
     predictionparameters<<-list(confirmdatabuttonpred=input$confirmdatabuttonpred,filetypepred=input$filetypepred,predictionfile=input$predictionfile,
                                 NAstringpred=input$NAstringpred,sheetpred=input$sheetnpred,decpred=input$decpred,seppred=input$seppred,
                                 transposepred=input$transposepred,zeroegalNApred=input$zeroegalNApred,
-                                log=resultsmodel$parameters$transformdataparameters$log,arcsin=resultsmodel$parameters$transformdataparameters$arcsin, 
+                                log=resultsmodel$parameters$transformdataparameters$log,logtype=resultsmodel$parameters$transformdataparameters$logtype,
+                                arcsin=resultsmodel$parameters$transformdataparameters$arcsin, 
                                 standardization=resultsmodel$parameters$transformdataparameters$standardization,rempNA=resultsmodel$parameters$transformdataparameters$rempNA,
                                 modeltype=resultsmodel$parameters$modelparameters$modeltype,invers=resultsmodel$parameters$modelparameters$invers,
                                 thresholdmodel=resultsmodel$parameters$modelparameters$thresholdmodel)
@@ -63,20 +64,20 @@ MODEL<-reactive({
         
 
         if(input$confirmdatabuttonpred!=0){
-        prediction<-confirmdata(toto=prediction)
+        prediction<<-confirmdata(toto=prediction)
         datastructuresfeatures<-resultsmodel$selectdata$DATASTRUCTUREDFEATURES
         structuredfeatures<-resultsmodel$selectdata$STRUCTUREDFEATURES
         predictiondiff<-prediction[,which(colnames(prediction)%in%colnames(learningmodel))]
         
           # colnames(validation)[1]<-"group"
           if(predictionparameters$log) { 
-            predictiondiff[,-1]<-log(x = predictiondiff+1)}
+            predictiondiff<-transformationlog(x = predictiondiff+1,logtype = predictionparameters$logtype)}
           if(predictionparameters$standardization){
-            predictiondiff[,-1]<-scale(predictiondiff, center = F, scale = TRUE)
+            predictiondiff<-scale(predictiondiff, center = F, scale = TRUE)
           }
         if(predictionparameters$arcsin){
-          predictiondiff[,-1]<-apply(X = predictiondiff,MARGIN = 2,FUN = function(x){(x-min(x))/(max(x)-min(x))})
-          predictiondiff[,-1]<-asin(sqrt(predictiondiff))
+          predictiondiff<-apply(X = predictiondiff,MARGIN = 2,FUN = function(x){(x-min(x))/(max(x)-min(x))})
+          predictiondiff<-asin(sqrt(predictiondiff))
         }
           #NAstructure if NA ->0
           if(!is.null(datastructuresfeatures)){
@@ -85,15 +86,15 @@ MODEL<-reactive({
           #
           predictionmodel<- replaceNAvalidation(predictiondiff,toto=learningmodel[,-1],rempNA=predictionparameters$rempNA)
           
-          if(predictionparameters$invers){
-            learningmodel[,1]<-factor(learningmodel[,1],levels = rev(levels(learningmodel[,1])),ordered = TRUE)
-          }
+#           if(predictionparameters$invers){
+#             learningmodel[,1]<-factor(learningmodel[,1],levels = rev(levels(learningmodel[,1])),ordered = TRUE)
+#           }
           lev<-levels(x = learningmodel[,1])
           names(lev)<-c("positif","negatif")
           
           #prediction a partir du model
           if(predictionparameters$modeltype=="randomforest"){
-            scorepredction <-predict(object=model,type="prob",newdata = predictionmodel)[,lev["positif"]]
+            scoreprediction <-predict(object=model,type="prob",newdata = predictionmodel)[,lev["positif"]]
             predictclassprediction<-vector(length = length(scoreprediction) ) 
             predictclassprediction[which(scoreprediction>=predictionparameters$thresholdmodel)]<-lev["positif"]
             predictclassprediction[which(scoreprediction<predictionparameters$thresholdmodel)]<-lev["negatif"]
@@ -110,9 +111,9 @@ MODEL<-reactive({
             predictclassprediction<-as.factor(predictclassprediction)
           }
           
-          if(sum(lev==(levels(predictclassprediction)))==0){
-            predictclassprediction<-factor(predictclassprediction,levels = rev(levels(predictclassprediction)),ordered = TRUE)
-          }
+#           if(sum(lev==(levels(predictclassprediction)))==0){
+#             predictclassprediction<-factor(predictclassprediction,levels = rev(levels(predictclassprediction)),ordered = TRUE)
+#           }
 #           classprediction<- validation[,1]
 #           if(sum(lev==(levels(classval)))==0){
 #             classval<-factor(classval,levels = rev(levels(classval)),ordered = TRUE)
@@ -120,9 +121,8 @@ MODEL<-reactive({
 #           
 #           #levels(predictclassval)<-paste("test",levels(predictclassval),sep="")
 #           levels(predictclassval)<-paste("test",lev,sep="")
-          respredictiontionmodel<-data.frame(predictclassprediction,scoreprediction)
+          respredictiontionmodel<<-data.frame(predictclassprediction,scoreprediction)
           colnames(respredictiontionmodel) <-c("predictclassprediction","scoreprediction") 
-          print(lev)
           datapredictionmodel<-list("predictionmodel"=predictionmodel,"respredictiontionmodel"=respredictiontionmodel,"groups"=lev)
         }
         else{datapredictionmodel=NULL
@@ -168,19 +168,25 @@ MODEL<-reactive({
     content = function(file) {
       downloaddataset(   PREDICT()$predictiondiff, file) })
   
-  output$modelparameters=renderTable({
-    if(!is.null(input$modelfile)){
-      modelparameters<-MODEL()$settingstable[c(17,18),1:5]
-      modelparameters<-t(modelparameters)
-      modelparameters<-as.data.frame(modelparameters[-1,],row.names=NULL)}
-  })
-  output$modelparameters2=renderTable({
-    if(!is.null(input$modelfile)){
-      modelparameters<-cbind(MODEL()$settingstable[3:4,2],MODEL()$settingstable[c(17,18),2:5])
-      modelparameters<-t(modelparameters)
-      modelparameters<-as.data.frame(modelparameters,row.names=NULL)
-      }
-  })
+output$modelparameters=renderTable({
+  if(!is.null(input$modelfile)){
+    settingstable<<-MODEL()$settingstable
+    modelparameters<-cbind(settingstable[3:4,c(2,7)],settingstable[c(17,18),2:3])
+    modelparameters<-t(modelparameters)
+    modelparameters[,1]<-paste("<strong>",modelparameters[,1],"</strong>")
+    modelparameters<-as.data.frame(modelparameters,row.names=modelparameters[,1])
+    }
+},sanitize.text.function=function(x){x},include.colnames=F)
+  
+output$modelparameters2=renderTable({
+  if(!is.null(input$modelfile)){
+    settingstable<<-MODEL()$settingstable
+    modelparameters<-cbind(settingstable[3:4,c(2,7)],settingstable[c(17,18),2:3])
+    modelparameters<-t(modelparameters)
+    modelparameters[,1]<-paste("<strong>",modelparameters[,1],"</strong>")
+    modelparameters<-as.data.frame(modelparameters,row.names=modelparameters[,1])
+  }
+},include.colnames=F,rownames=F,sanitize.text.function=function(x){x})
   
   
   output$modelmainresults=renderTable({
@@ -189,12 +195,19 @@ MODEL<-reactive({
     modelmainresults<-as.data.frame(modelmainresults)
     modelmainresults<-t(modelmainresults)
     modelmainresults<-cbind(modelmainresults[1:3,1:2],modelmainresults[c(4:6),1:2])
+    modelmainresults[,1]<-paste("<strong>",modelmainresults[,1],"</strong>")
+    modelmainresults[,3]<-paste("<strong>",modelmainresults[,3],"</strong>")
     modelmainresults
-    }})
+    }},include.colnames=F,sanitize.text.function=function(x){x})
   
-  output$resprediction=renderTable({
-    cbind(rownames(PREDICT()$respredictiontionmodel),PREDICT()$respredictiontionmodel)
-  }) 
+output$resprediction=renderTable({
+  if(input$confirmdatabuttonpred!=0){
+  res<<-cbind("Names"=rownames(PREDICT()$respredictiontionmodel),"Prediction"=as.character(PREDICT()$respredictiontionmodel[,1]),"Score"=PREDICT()$respredictiontionmodel[,2])
+  res[,1]<-paste("<strong>",res[,1],"</strong>")
+  res
+  }
+},sanitize.text.function=function(x){x}) 
+  
   output$downloaddataresprediction <- downloadHandler(
     filename = function() { paste('dataset', '.','csv', sep='') },
     content = function(file) {
@@ -207,7 +220,6 @@ MODEL<-reactive({
       score<<-MODEL()$model$DATALEARNINGMODEL$reslearningmodel$scorelearning
       thresholdmodel<<-MODEL()$parameters$modelparameters$thresholdmodel
       groups<<-PREDICT()$groups
-      print(groups)
       densityscore(score = score,scorepredict = scorepredict,maintitle="Density learning's score and prediction score",threshold=thresholdmodel,groups=groups)
     }
     })

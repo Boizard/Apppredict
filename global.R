@@ -38,7 +38,13 @@ downloaddataset<-function(x,file,cnames=T,rnames=T){
   if(ext=="xlsx"){
     write.xlsx(x,file,col.names = cnames,row.names =rnames )
   }
-  
+}
+
+transformationlog<-function(x,logtype){
+  if(logtype=="log10"){x<-log10(x)}
+  if(logtype=="log2"){x<-log2(x)}
+  if(logtype=="logn"){x<-log(x)}
+  return(x)
 }
 
 downloadplot<-function(file){
@@ -189,7 +195,7 @@ densityscore<-function(score,scorepredict,maintitle="Density learning's score an
     geom_point(data = coordpredict, colour = "black",size=rep(4,length(x)))+
     ggtitle(maintitle)+theme(plot.title=element_text( size=20))+theme(legend.position = "bottom")+
     theme(legend.text=element_text(size=20))+theme(legend.title=element_text(20))+ 
-    scale_fill_manual(name="Groups",
+    scale_fill_manual(name="Groups : ",
                       values=c(alpha("blue",alpha = 0.1),alpha("red",alpha = 0.5)),
                       labels=c(as.character(groups[2]),as.character(groups[1])))+guides(colour = guide_legend(override.aes = list(alpha = 0.5)))
 }
