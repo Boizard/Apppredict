@@ -44,7 +44,7 @@ MODEL<-reactive({
     resultsmodel<<-MODEL()
     # modelparameters<<-resultsmodel$parameters$modelparameters
     predictionparameters<<-list(confirmdatabuttonpred=input$confirmdatabuttonpred,filetypepred=input$filetypepred,predictionfile=input$predictionfile,
-                                NAstringpred=input$NAstringpred,sheetpred=input$sheetnpred,decpred=input$decpred,seppred=input$seppred,
+                                NAstringpred=input$NAstringpred,sheetnpred=input$sheetnpred,skipnpred=input$skipnpred,decpred=input$decpred,seppred=input$seppred,
                                 transposepred=input$transposepred,zeroegalNApred=input$zeroegalNApred,
                                 log=resultsmodel$parameters$transformdataparameters$log,logtype=resultsmodel$parameters$transformdataparameters$logtype,
                                 arcsin=resultsmodel$parameters$transformdataparameters$arcsin, 
@@ -56,7 +56,7 @@ MODEL<-reactive({
     if(is.null(input$predictionfile)){return(data.frame())}#Pas de fichier
     if(!is.null(input$predictionfile)  ){
       
-        datapath<- predictionparameters$predictionfile$datapath
+        datapath<<- predictionparameters$predictionfile$datapath
         prediction<<-importfile(datapath = datapath,extension = predictionparameters$filetypepred,
                               NAstring=predictionparameters$NAstringpred,sheet=predictionparameters$sheetnpred,
                               skiplines=predictionparameters$skipnpred,dec=predictionparameters$decpred,sep=predictionparameters$seppred)
