@@ -208,9 +208,12 @@ confirmdata<-function(toto){
 }
 
 replaceNAvalidation<-function(validationdiff,toto,rempNA){
-  validationdiffssNA<-validationdiff
+  validationdiffssNA<-as.data.frame(validationdiff)
   for(i in 1:nrow(validationdiff)){
+    #print(class(validationdiffssNA))
+    #print(class(replaceNAoneline(lineNA = validationdiff[i,],toto = toto,rempNA =rempNA)))
     validationdiffssNA[i,]<-replaceNAoneline(lineNA = validationdiff[i,],toto = toto,rempNA =rempNA)
+    #print(i)
   }
   return(validationdiffssNA)
 }
