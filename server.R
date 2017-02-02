@@ -198,7 +198,7 @@ output$modelparameters2=renderTable({
     modelmainresults[,1]<-paste("<strong>",modelmainresults[,1],"</strong>")
     modelmainresults[,3]<-paste("<strong>",modelmainresults[,3],"</strong>")
     modelmainresults
-    }},include.colnames=F,sanitize.text.function=function(x){x})
+    }},include.colnames=F,sanitize.text.function=function(x){x},include.rownames=F)
   
 output$resprediction=renderTable({
   if(input$confirmdatabuttonpred!=0){
@@ -206,7 +206,7 @@ output$resprediction=renderTable({
   res[,1]<-paste("<strong>",res[,1],"</strong>")
   res
   }
-},sanitize.text.function=function(x){x}) 
+},sanitize.text.function=function(x){x},include.rownames=F) 
   
   output$downloaddataresprediction <- downloadHandler(
     filename = function() { paste('dataset', '.','csv', sep='') },
