@@ -2,7 +2,8 @@ library(shiny)
 
 shinyUI(fluidPage(
   # Application title
-  titlePanel("Prediction Application"),
+  titlePanel("La Boize 2"),
+  hr(),
     sidebarLayout(
       conditionalPanel(condition="input.confirmdatabuttonpred==0",
         sidebarPanel(
@@ -66,8 +67,13 @@ shinyUI(fluidPage(
           )
         ),
         conditionalPanel(condition="input.confirmdatabuttonpred!=0",
-          textOutput("predictionfile2",inline=T), tags$head(tags$style("#predictionfile2{color: grey;font-size: 30px;font-style: bold;}")),
-          dataTableOutput("JDDpredictiondiff"),
+          p(fluidRow(
+            column(width=8,h2('Table for prediction : ')),
+            column(width=2,h4("File name : ",inline=T)),
+            column(width=4,textOutput("predictionfile2",inline=T), tags$head(tags$style("#predictionfile2{color: grey;font-size: 20px;font-style: bold;}")))
+            )
+          ),
+          dataTableOutput("JDDpredictiondiff"), 
           p(downloadButton("downloaddataJDDpredictiondiff","Download dataset"),align="center"),
           hr(),
           wellPanel(            
