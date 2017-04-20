@@ -216,7 +216,7 @@ densityscore<-function(score,scorepredict,maintitle="Density learning's score an
 confirmdata<-function(toto){
   for (i in 1:ncol(toto)){
     toto[,i]<-as.numeric(as.character(toto[,i]))
-  }
+  } 
   return(toto)
 }
 
