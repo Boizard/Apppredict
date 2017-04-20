@@ -64,7 +64,7 @@ MODEL<-reactive({
         
 
         if(input$confirmdatabuttonpred!=0){
-        prediction<<-confirmdata(toto=prediction)
+        prediction<-confirmdata(toto=prediction)
         datastructuresfeatures<-resultsmodel$selectdata$DATASTRUCTUREDFEATURES
         structuredfeatures<-resultsmodel$selectdata$STRUCTUREDFEATURES
         predictiondiff<-prediction[,which(colnames(prediction)%in%colnames(learningmodel))]
@@ -73,15 +73,15 @@ MODEL<-reactive({
           predictiondiff<-transformationlog(x = predictiondiff+1,logtype =resultsmodel$transformdata$transformdataparameters$logtype )
           learningselect[,-1]<-transformationlog(x = learningselect[,-1]+1,logtype=resultsmodel$transformdata$transformdataparameters$logtype)}
         if(resultsmodel$transformdata$transformdataparameters$arcsin){
-          predictiondiff[,-1]<-apply(X = predictiondiff[,-1],MARGIN = 2,FUN = function(x){(x-min(x))/(max(x)-min(x))})
-          predictiondiff[,-1]<-asin(sqrt(predictiondiff[,-1]))
-          learningselect[,-1]<-apply(X = learningselect[,-1],MARGIN = 2,FUN = function(x){(x-min(x))/(max(x)-min(x))})
+          predictiondiff<-apply(X = predictiondiff,MARGIN = 2,FUN = function(x){{(x-min(x,na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T))}})
+          predictiondiff<-asin(sqrt(predictiondiff))
+          learningselect[,-1]<-apply(X = learningselect[,-1],MARGIN = 2,FUN = function(x){(x-min(x,na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T))})
           learningselect[,-1]<-asin(sqrt(learningselect[,-1]))
         }
         if(resultsmodel$transformdata$transformdataparameters$standardization){
           learningselectval<<-learningselect
           sdselect<-apply(learningselect[,which(colnames(learningselect)%in%colnames(predictiondiff))], 2, sd,na.rm=T)
-          predictiondiff<-scale(predictiondiff,center=F,scale=sdselect)
+          predictiondiff<-scale(predictiondiff,center=F,scale=sdselect[-1])
         }
           #NAstructure if NA ->0
           if(!is.null(datastructuresfeatures)){
