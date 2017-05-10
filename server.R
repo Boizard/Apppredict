@@ -72,11 +72,21 @@ MODEL<-reactive({
         if(resultsmodel$transformdata$transformdataparameters$log) { 
           predictiondiff<-transformationlog(x = predictiondiff+1,logtype =resultsmodel$transformdata$transformdataparameters$logtype )
           learningselect[,-1]<-transformationlog(x = learningselect[,-1]+1,logtype=resultsmodel$transformdata$transformdataparameters$logtype)}
+        
         if(resultsmodel$transformdata$transformdataparameters$arcsin){
-          predictiondiff<-apply(X = predictiondiff,MARGIN = 2,FUN = function(x){{(x-min(x,na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T))}})
-          predictiondiff<-asin(sqrt(predictiondiff))
-          learningselect[,-1]<-apply(X = learningselect[,-1],MARGIN = 2,FUN = function(x){(x-min(x,na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T))})
+          maxlearn<-apply(X = learningselect[,-1],MARGIN = 2,FUN = max,na.rm=T)
+          minlearn<-apply(X = learningselect[,-1],MARGIN = 2,FUN = min,na.rm=T)
+          for (i in 2:dim(predictiondiff)[2]){
+            predictiondiff[,i]<-(predictiondiff[,i]-minlearn[i-1])/(maxlearn[i-1]-minlearn[i-1])
+        #validationdiff[,-1]<-apply(X = as.data.frame(validationdiff[,-1]),MARGIN = 2,FUN = function(x){{(x-min(x,na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T))}})
+            predictiondiff[which(predictiondiff[,i]>1),i]<-1
+            predictiondiff[which(predictiondiff[,i]<0),i]<-0
+            predictiondiff[,i]<-asin(sqrt(predictiondiff[,i]))
+
+        }
+          learningselect[,-1]<-apply(X = learningselect[,-1],MARGIN = 2,FUN = function(x){{(x-min(x,na.rm = T))/(max(x,na.rm = T)-min(x,na.rm = T))}})
           learningselect[,-1]<-asin(sqrt(learningselect[,-1]))
+ 
         }
         if(resultsmodel$transformdata$transformdataparameters$standardization){
           learningselectval<<-learningselect
