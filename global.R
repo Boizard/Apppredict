@@ -86,7 +86,7 @@ transformdata<-function(toto,transpose,zeroegalNA){
   
   if(zeroegalNA){toto[which(toto==0,arr.ind = T)]<-NA}
   
-  toto<-as.data.frame(toto)
+  #toto<-as.data.frame(toto)
   toto<-as.data.frame(toto[,c(colnames(toto)[1],sort(colnames(toto)[-1]))])
 }
 
